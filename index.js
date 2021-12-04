@@ -11,6 +11,7 @@ const WAIT_TIMEOUT = 30 * 1000;
 async function main() { 
     let driver = new webdriver.Builder()
         .forBrowser('chrome')
+        .getChromeOptions
         .usingServer('http://localhost:9515')
         .build();
 
@@ -46,9 +47,13 @@ async function startMining(driver) {
     const claimButton = await findButton(driver, 'Claim Mine');
     claimButton.click();
 
-    await switchToApproveWindow(driver, async () => clickApproveTransactionButton(driver));
+    try {
+        await switchToApproveWindow(driver, async () => clickApproveTransactionButton(driver));
 
-    await driver.wait(until.titleIs('Alien Worlds'), WAIT_TIMEOUT);
+        await driver.wait(until.titleIs('Alien Worlds'), WAIT_TIMEOUT);
+    } catch(error) {
+        console.log('Error in switch window:', error);
+    }
 
     return startMining(driver);
 }
@@ -58,7 +63,7 @@ async function switchToApproveWindow(driver, cb) {
     await driver.wait(
         async () => (await driver.getAllWindowHandles()).length === 2,
         WAIT_TIMEOUT,
-      );
+    );
 
     const windows = await driver.getAllWindowHandles();
     windows.forEach(async handle => {
@@ -83,14 +88,18 @@ async function clickApproveTransactionButton(driver) {
     for(const button of buttons) {
         const text = await button.getText();
         if (text === 'Approve') {
-            button.click();
+            try {
+                button.click();
+            } catch(error) {
+                console.log("Error in button click 'Approve'")
+            }
         }
     }
 }
 
 async function findButton(driver, buttonLocator) {
     const buttons = await driver.findElements({tagName: 'span', linkText: buttonLocator});
-    // console.log('try to find button:', buttonLocator);
+
     let searchedButton;
 
     for(const button of buttons) {
@@ -104,7 +113,6 @@ async function findButton(driver, buttonLocator) {
             console.log('Error in findButton');
         }
     }
-    
 
     if (!searchedButton) {
         await new Promise((res) => setTimeout(res, 5*1000));
