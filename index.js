@@ -11,7 +11,6 @@ const WAIT_TIMEOUT = 30 * 1000;
 async function main() { 
     let driver = new webdriver.Builder()
         .forBrowser('chrome')
-        .getChromeOptions
         .usingServer('http://localhost:9515')
         .build();
 
